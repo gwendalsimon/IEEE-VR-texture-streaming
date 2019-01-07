@@ -1,0 +1,84 @@
+%Define the color series
+\definecolor{AdobeRed}{RGB}{255,0,0}
+\definecolor{AdobeOrange}{RGB}{251,176,52}
+\definecolor{AdobeYellow}{RGB}{255,221,0}
+\definecolor{AdobeGreen}{RGB}{193,216,47}
+\definecolor{AdobeBlue}{RGB}{0,164,228}
+\definecolor{AdobeViolet}{RGB}{131,72,181}
+
+\definecolor{NeutralLightGray}{RGB}{218,221,224}
+\definecolor{NeutralGray}{RGB}{172,179,185}
+\definecolor{NeutralDarkGray}{RGB}{107,115,123}
+\definecolor{NeutralLightSand}{RGB}{228,223,217}
+\definecolor{NeutralSand}{RGB}{192,181,169}
+\definecolor{NeutralDarkSand}{RGB}{136,120,104}
+
+
+\tikzset{
+	style_box/.style={very thick}
+}
+
+\pgfplotscreateplotcyclelist{cycle-adobe-box}{
+{AdobeOrange!75!black, fill=AdobeOrange, style_box},
+{NeutralSand!75!black, fill=NeutralSand, style_box},
+{NeutralDarkSand!7!black, fill=NeutralDarkSand, style_box}}
+
+\pgfplotscreateplotcyclelist{cycle-adobe}{
+{very thick, densely dashed, draw=AdobeGreen},
+{very thick, densely dotted, draw=AdobeViolet},
+{thick, draw=AdobeGreen},
+{thick, draw=AdobeViolet}
+}
+
+\usepackage{xstring}
+
+
+\newcommand*{\DrawBoundingBox}[1][]{%
+  \draw [red]
+  ([shift={(-5pt,-5pt)}]current bounding box.south west)
+  rectangle
+  ([shift={(5pt,+5pt)}]current bounding box.north east);
+
+  \coordinate (X) at (current bounding box.south);
+  \tikzset{baseline={(X)}} % X is the alignment point
+
+  \IfStrEq{#1}{}{}{% 5.0em selected to get failing test case
+    \node [below, anchor=north, text width=5.0em, align=center, 
+    ] 
+    at (current bounding box.south)
+    {#1\strut};
+  }%
+}
+
+\usepackage{pgf}
+
+
+\pgfmathsetseed{\number\pdfrandomseed} % provide seed for pseudo random generator
+% (change to constant, to get the same random numbers on every time compiling)
+
+% new command to init variables
+\newcommand\initVariables{
+    \pgfmathsetmacro{\A}{random(0,200)}
+    \pgfmathsetmacro{\B}{random(0,200)}
+}
+
+\newcommand\example[2]{
+  %\begin{myfloat}[h]
+  \vspace{5pt}
+  \noindent
+  \begin{tikzpicture}
+  \node[text width=0.9*\columnwidth, 
+    fill=AdobeViolet, 
+    draw=AdobeViolet!70!black, 
+    rounded corners, inner sep=12pt]
+    (filledText)
+    {\color{white}#1};
+  \node[
+    fill=white,
+    draw=AdobeViolet!70!black,
+    anchor=west]
+    at ([xshift=20pt]filledText.north west)
+    {\color{AdobeViolet}\textbf{Anticipated Example: #2}};
+  \end{tikzpicture}
+  %\end{myfloat}
+}
