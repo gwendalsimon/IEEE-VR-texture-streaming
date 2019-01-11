@@ -1,0 +1,54 @@
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+   ylabel = median PSNR (dB), ymin =30, ymax=60,
+   xlabel = bytes per pixel, xmin=0, xmax=1,
+   height = 35ex,
+   width=\columnwidth,
+   legend pos = south east,
+   %legend columns = 2,
+   legend cell align = left,
+   legend style = {
+    %  at = {(0.5,1.03)},
+    %  anchor = south,
+      draw = none,
+      font=\footnotesize,
+   },
+   cycle list name=adobe-rd,
+   ]
+
+   \addplot+ %[error bars/.cd,
+             %  y dir=both, y explicit]
+             table[
+               x=rate,
+               y=mean_dist,
+             %  y error plus = max_dist,
+             %  y error minus = min_dist,
+            ] {CSV_for_RD/rd_optimalSequence.csv};
+   \addlegendentry{video}
+  
+   \addplot+ %[error bars/.cd,
+             %  y dir=both, y explicit]
+             table[
+               x=rate,
+               y=mean_dist,
+             %  y error plus = max_dist,
+             %  y error minus = min_dist,
+            ] {CSV_for_RD/rd_jpg.csv};
+   \addlegendentry{jpeg}
+
+   \addplot+ %[error bars/.cd,
+             %  y dir=both, y explicit]
+             table[
+               x=rate,
+               y=mean_dist,
+             %  y error plus = max_dist,
+             %  y error minus = min_dist,
+            ] {CSV_for_RD/rd_webp.csv};
+   \addlegendentry{webp}
+
+\end{axis}
+\end{tikzpicture}
+\caption{Rate-distortion}\label{fig:rd}
+\end{figure}

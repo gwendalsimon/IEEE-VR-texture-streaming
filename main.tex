@@ -14,6 +14,7 @@
 \usepackage{tikz-inet}
 \usepackage{tikz-3dplot}
 \usetikzlibrary{arrows,automata,angles,quotes}
+\usetikzlibrary{decorations.markings}
 \usepackage{pgf}
 \usepgflibrary{shapes.arrows}
 \usepackage{color}
@@ -62,13 +63,91 @@ This paper deals with the delivery of textures for large, rich 3D scenes.
 
 \section{Introduction}
 
-The growing popularity of applications based on the display of 3D scenes, especially for \gls{AR}
-and \gls{VR}, brings new technical challenges related to the delivery of content from the servers 
-of the content provider to the end-users.
+The growing popularity of applications that process 3D scenes brings new technical challenges related to the delivery of content from the servers 
+of the provider to the end-users. A client who connects to the service downloads the elements of the 3D
+scene before the start of the immersion experience. However, high-quality 3D scenes containing multiple objects and highly detailed background elements are represented by very large files, typically in the order of Giga-Bytes when uncompressed. Despite the progresses of networking technologies, the client can hardly wait for the whole uncompressed files to be downloaded. An abundant literature has studied the compression and the delivery of 3D meshes~\cite{MagloLDH15}, but researchers have paid much less attention to the delivery of \emph{textures} over the network. Compression of textures have essentially focused on \gls{GPU} memory bandwidth management~\cite{RodriguezGGMMPS14}. In this paper, we focus on texture compression for network delivery.
+
+We aim at designing a texture delivery system that features: $(i)$ \emph{Universality}: it does not require the implementation of new software in the delivery chain. On the contrary, we aim at leveraging the technologies that are already implemented both in the \glspl{CDN} and in the vast majority of client devices. $(ii)$ \emph{Adaptivity}: All end-users are not equal regarding the capabilities of their devices and their access to network resources. One of the lessons learned from the massive adoption of \gls{HAS} for video delivery is that adaptivity is a core feature of scalable delivery solutions. We aim at enabling \emph{adaptive} delivery of textures with respect to client capabilities. And $(iii)$ \emph{Optionality}: The mismatch between the size of the data to deliver and the physical network resources imposes the client to compromise. We aim at offering multiple options to choose between the quality of the displayed content and the delay to get it.
+
+Instead of compressing the images one by one and delivering them independently, we take a different approach. We leverage video encoding technologies to deliver the textures of a 3D scene. The main idea is as follows: the server builds a \emph{sequence} of textures (an ordered set of images) and it encodes this sequence of images as a video, which can then be delivered. The client decodes the video and extracts all the textures. The motivation behind this proposal is to exploit the visual correlations between independent textures to compress the images that have to be delivered.
+
+In this paper, we introduce this idea and we provide a very first result to highlight the expected benefits. We emphasize that this pioneering idea has the potential to address the three aforementioned features of an adaptive texture delivery. We reveal the multiple research questions that arise from this approach and that can lead to even better performance for the delivery chain.
+
+% -------------------------------------------------------
+\section{Proposal Description}
+
+\newcommand{\nod}[1]{
+   {\protect\tikz[baseline={([yshift=-.5ex]current bounding box.center)}] 
+      \protect\node[
+         inner sep=1pt,
+         thick, 
+         circle, 
+         draw] {#1};
+   }%
+}
+
+\begin{figure*}[t]
+\centering
+\input{fig-system.tex}
+\caption{Delivery chain: the different modules at the server side are \nod{1} tiling, then \nod{2} sorting, and then \nod{3} encoding; while the operations  at the client side are \nod{4} decoding and \nod{5} reconstructing.} \label{fig:system}
+\end{figure*}
+
+We propose to build a video from the set of textures that have to be delivered in a 3D multimedia application. Indeed, we observe that, in a large 3D scene, many textures have similarities, for example, multiple wood-based textures in a forest scene or marble-based textures in a palace. A video encoder can exploit this similarity between two independent textures in order to transmit both textures into a video of two frames where the first fame is the first texture and the second frame is what is needed to reconstruct the second texture from the information of the first frame.
+Our proposal is illustrated in \Cref{fig:system}. We describe each of the steps in the following.
+
+\subsection{At the Server Side}
+
+The service provider prepares the sequence of images that is the input of the video encoder. We denote by $\mathcal T$ the set of textures that have to be delivered. The output at the server side is a video containing the data of $\mathcal T$ with as few losses as possible.
+
+\newparag{Image Size Homogenization} All texture images in $\mathcal T$ do not have the same size, although the input of a video should have the same resolution. To homogenize the input of the video, our first operation (which is noted as \nod{1} in \Cref{fig:system}), is to cut each texture in $\mathcal T$ into unit \emph{texture tiled images}. In our example, both red and green textures are cut into two tiles that have the size of the smallest texture image. The resulting set of texture tiled images is noted $T$.
+
+\newparag{Image Sequence Ordering} All texture tiled images in $T$ are then sorted based on their similarities. Let $d_{i,j}$ be the dissimilarity between two independent texture tiled images $i$ and $j$ in $T$. The lower is $d_{i,j}$, the more similar are $i$ and $j$. Our goal is to ensure that consecutive images have a high similarity, so that the video encoder can exploit this similarity and thus efficiently compress the video. The theoretical optimal solution of the sequence ordering is obtained by computing the minimum salesman traveling given the distance matrix $\mathcal D= \{d_{i,j}, \forall i,j \in T\}$. Indeed, the solution maximizes the sum of the similarities between every pair of consecutive images and includes all texture tiled images in the ordered sequence. The operation \nod{2} in \Cref{fig:system} results in a sequence noted $S$ that includes the whole set of information that is necessary to reconstruct $\mathcal T$.
+
+\newparag{Video Encoding} The video encoder takes $S$ as input and builds a video that contains all tiled images (operation \nod{3} in \Cref{fig:system}). The main parameters that modern encoders require include the \emph{number of frames per second}, denoted by $f$, and the \emph{target video bit-rate}, denoted by $v$. Frames have no temporal relation, so the service provider can freely choose any value for $f$; the higher is $f$, the more texture tiled images are sent per time unit. However, since the number of texture tiled images to deliver is fixed, the settings of $f$ is linearly related to the video duration. For a sequence $S$ containing \num{300} images, a setting $f=30$ results in a video that is \SI{10}{\second} long. Then, for a given parameter $f$, the video bit-rate $v$ enables the settings of the quality; the higher is $v$, the lower is the compression and thus the higher is the quality of the images. Both parameters $f$ and $v$ allow the service provider to prepare multiple versions of the same set of textures $\mathcal T$, which can have multiple delivery delay and multiple qualities. Examples are given in \Cref{sec:performance}. 
+
+\subsection{At the client side}
+
+\newparag{Video Decoding} The client obtains the video and the set of metadata that enables the reconstruction of the texture images. It decodes the video and extracts a sequence $\Sigma$ of \emph{video frames}. This operation, noted \nod{4} in \Cref{fig:system}, is typically done in the \gls{GPU} of the client device. A major advantage of our solution is that the devices that can process 3D data to build a scene can also decode video in the most recent compression formats. Hence, our solution respects the universality feature of a texture delivery system.
+
+\newparag{Texture Reconstruction} From the metadata file, the client is able to reconstruct the textures by appropriately stitching the decoded frames in $\Sigma$. The resulting set of textures $\mathcal R$ is a lossy version of the original set of textures $\mathcal T$ where the loss depends on the settings of both $f$ and $v$.
+
+% -------------------------------------------------------
+\section{Performance Evaluation}
+\label{sec:performance}
+
+We present here the result of a proof-of-concept experiment that we conducted to evaluate the potential of this idea. We used the well-known \emph{Viking Village} scene from \emph{Unity} Asset Store since it is a popular scene with high-quality textures and a reasonably large diversity of textures. The total size of all texture images is \SI{1.2}{\giga Bytes}. To manipulate smaller sets, we extracted a randomly selected set of \num{64} textures representing \SI{300}{\mega Bytes}.
+ Since the height and width of the original texture images range from \num{256} to \num{4096}, we used a unit tile size of $\num{256}\times\num{256}$. We compute the dissimilarity between every pair of texture tiled images by using the \gls{MAE}. We used the \gls{HEVC} software from the \emph{libx265} library. The parameters are given in \Cref{tab:videos}. Finally, we computed the \gls{PSNR} between the original uncompressed texture images in $\mathcal T$ and the reconstructed images in $\mathcal R$.
+
+\begin{table}[h]
+\centering
+\footnotesize
+%\normalsize
+\begin{tabular}{llll}
+\toprule
+\textbf{fps} & \textbf{length} & \textbf{bit-rate (in kilobits per s)} & \textbf{size (in megabytes)} \\
+\midrule
+2 & \SI{1566}{\second} & from \SI{50}{\kilo bps} to \SI{1250}{\kilo bps} & from \SI{9}{\mega B} to \SI{146}{\mega B}\\
+60 & \SI{52}{\second}  & from \SI{5}{\mega bps} to {15}{\mega bps} & from \SI{31}{\mega B} to \SI{83}{\mega B}\\
+120 & \SI{26}{\second} & from \SI{20}{\mega bps} to {40}{\mega bps} & from \SI{57}{\mega B} to \SI{101}{\mega B}\\
+\bottomrule
+\end{tabular}
+\caption{Video settings and resulting size }\label{tab:videos}
+\end{table}
+
+To compare the performance of our solution with respect to state-of-the-art, we compressed the textures in $\mathcal T$ using both \emph{jpeg} and \emph{webp} from \emph{openCV}. We measured for both sets of compressed images the \gls{PSNR} and rate. The traditional rate-distortion curve is presented in \Cref{fig:rd} where the $y$-axis is the median \gls{PSNR} across all textures in $\mathcal R$.
+
+\input{fig-rd.tex}
+
+Although we show the result of our earliest experiments without any additional optimization, our approach using video encoder has compression performance that is at least as good as the state-of-the-art \emph{webp} image compression library. The main advantage of our approach is that we have a wider range of settings that are possible, and thus we able to provide a solution that is more adaptive. Furthermore, we have a larger set of options, including more qualitative compression of textures.
+
+% -------------------------------------------------------
+\section{Research Opportunities}
+\label{sec:conclusion}
+
+We have introduced in this paper a new approach to deliver a set of textures by encoding them into a video. We highlighted themain features of this approach: $(i)$ its legacy to existing delivery software and hardware, and $(ii)$ its better adaptivity to client resources, including more delivery options at high quality. This paper describes our earliest work in this area. Many research questions are still open, including $(i)$ The video decoding is processed in the \gls{GPU}. Since 3D scene processing is also done in the \gls{GPU}, it is possible to design a pipeline between the video decoder and the 3D engine in order to bypass the traditional \gls{GPU} I/O bottleneck. $(ii)$ video compression with \gls{HEVC} is more effective with larger frames. The tiling operation could be improved in order to put larger input images to the video encoder. $(iii)$ Textures may have different format and structures (albedo, mask, depth map). Instead of having only one sequence of textures, we can create subsets of textures from their similarities. $(iv)$ optimization problems should be studied to find the trade-off between quality, delay, and resource usages with respect to the distance of the camera to the texture and to the object on which the texture applies. The solution that we introduced in this paper opens multiple exciting research opportunities with potentially high rewarding benefits for the delivery problem in the 3D multimedia application.
 
 
-
-\bibliographystyle{abbrv-doi-hyperref}
+\bibliographystyle{abbrv}
 
 \bibliography{biblio.bib}
 \end{document}

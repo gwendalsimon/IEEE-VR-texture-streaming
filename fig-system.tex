@@ -1,0 +1,245 @@
+\begin{tikzpicture}[font=\footnotesize]
+
+\def\wid{12}  
+\def\hei{14}
+\def\grad{50}
+\def\ecart{-1pt}
+\def\sizY{18pt}
+\def\initial{-15pt}
+
+\def\ecartYTexture{5pt}
+
+\def\ecartXStep{65pt}
+
+\tikzset{
+textureUnit/.style={
+    very thick,
+    minimum height=\hei,
+    text width = \wid,
+    align = center,
+    inner sep=1pt
+    }
+}
+
+% ================================
+
+
+\node[textureUnit, 
+    fill=AdobeRed!\grad,
+    draw = AdobeRed] (redA) {A};
+\node[textureUnit,
+    fill=AdobeRed!\grad,
+    draw = AdobeRed,
+    right=\ecart of redA] (redB) {B};
+
+\node[textureUnit,
+    fill=AdobeGreen!\grad,
+    draw = AdobeGreen,
+    xshift = 10pt,
+    below = \ecartYTexture of redA] (greenA) {A};
+\node[textureUnit,
+    fill=AdobeGreen!\grad,
+    draw = AdobeGreen,
+    below=\ecart of greenA] (greenB) {B};
+
+\node[textureUnit,
+    fill=AdobeBlue!\grad,
+    draw = AdobeBlue,
+    below = \ecartYTexture of greenB] (blueA) {A};
+    
+\node[above=30pt of greenA, font=\normalsize] 
+    (texture){textures};
+
+% ================================
+
+\node[textureUnit, 
+    fill=AdobeGreen!\grad,
+    draw = AdobeGreen]
+    at ([xshift=\ecartXStep,yshift=7pt]greenB) (greenAextracted) {A};
+
+\foreach \col/\letter/\i in {
+    AdobeRed/A/2,
+    AdobeRed/B/1}{
+    \node[textureUnit,
+        fill = \col!\grad,
+        draw = \col,
+        above=\initial + (\i*\sizY) of greenAextracted] 
+        (\col\letter extracted) {\letter};
+}    
+    
+\foreach \col/\letter/\i in {    
+    AdobeGreen/B/1,
+    AdobeBlue/A/2}{
+    \node[textureUnit,
+        fill = \col!\grad,
+        draw = \col,
+        below=\initial + (\i*\sizY) of greenAextracted] 
+        (\col\letter extracted) {\letter};
+}
+
+\node[font=\normalsize] at (greenAextracted |- texture) {tiles};
+
+% ================================
+
+\node[textureUnit, 
+    fill=AdobeGreen!\grad,
+    draw = AdobeGreen]
+    at ([xshift=\ecartXStep]greenAextracted) (greenAsequenced) {B};
+
+\foreach \col/\letter/\i in {
+    AdobeRed/A/2,
+    AdobeGreen/A/1}{
+    \node[textureUnit,
+        fill = \col!\grad,
+        draw = \col,
+        above=\initial + (\i*\sizY) of greenAsequenced] 
+        (\col\letter sequenced) {\letter};
+}    
+    
+\foreach \col/\letter/\i in {    
+    AdobeRed/B/2,
+    AdobeBlue/A/1}{
+    \node[textureUnit,
+        fill = \col!\grad,
+        draw = \col,
+        below=\initial + (\i*\sizY) of greenAsequenced] 
+        (\col\letter sequenced) {\letter};
+}
+
+\node[font=\normalsize] at (greenAsequenced |- texture) {ordered tiles};
+
+
+% ================================
+
+\node[textureUnit,
+    fill=gray!\grad,
+    draw=black]
+    at ([xshift=\ecartXStep]greenAsequenced) (frameOne) {1};
+    
+\foreach \i in {2,...,5}{
+    \node[textureUnit,
+    fill=gray!\grad,
+    draw=black]
+    at ([xshift=(-1.3+1.3*\i)*17pt]frameOne) (na) {\i};}
+    
+\node[anchor=east] at ([yshift=-18pt]na)(metadata) {+ metadata};
+\node[font=\normalsize] at ([yshift=30pt]$(frameOne)!0.5!(na)$) {encoded video}; 
+    
+\draw[very thick, densely dotted] 
+    ([xshift=-4pt, yshift=4pt]frameOne.north west) rectangle 
+    ([xshift=4pt, yshift=-4pt]na.south east);
+
+% ================================
+
+\node[textureUnit, 
+    fill=gray!\grad,
+    draw = gray]
+    at ([xshift=\ecartXStep]na) (grayExtracted) {3};
+
+\foreach \col/\letter/\i in {
+    gray/1/2,
+    gray/2/1}{
+    \node[textureUnit,
+        fill = \col!\grad,
+        draw = \col,
+        above=\initial + (\i*\sizY) of grayExtracted] 
+        {\letter};
+}    
+    
+\foreach \col/\letter/\i in {    
+    gray/4/1,
+    gray/5/2}{
+    \node[textureUnit,
+        fill = \col!\grad,
+        draw = \col,
+        below=\initial + (\i*\sizY) of grayExtracted] 
+        {\letter};
+}
+
+\node[font=\normalsize] at (grayExtracted |- texture) {decoded frames};
+
+    
+% ================================
+
+% \node[textureUnit, 
+%     fill=AdobeGreen!\grad,
+%     draw = AdobeGreen]
+%     at ([xshift=\ecartXStep]grayExtracted) (greenAdecoded) {B};
+
+% \foreach \col/\letter/\i in {
+%     AdobeRed/A/2,
+%     AdobeRed/B/-2}{
+%     \node[textureUnit,
+%         fill = \col!\grad,
+%         draw = \col,
+%         above=\initial + (\i*\sizY) of greenAdecoded] 
+%         (\col\letter decoded) {\letter};
+% }    
+    
+% \foreach \col/\letter/\i in {    
+%     AdobeGreen/A/1,
+%     AdobeBlue/A/-1}{
+%     \node[textureUnit,
+%         fill = \col!\grad,
+%         draw = \col,
+%         below=\i*\sizY of greenAdecoded] 
+%         (\col\letter decoded) {\letter};
+% }
+
+\node[textureUnit, 
+    fill=AdobeRed!\grad,
+    draw = AdobeRed] 
+    at ([xshift=\ecartXStep]grayExtracted |- redA) (redAdecoded) {A};
+\node[textureUnit,
+    fill=AdobeRed!\grad,
+    draw = AdobeRed,
+    right=\ecart of redAdecoded] (redBdecoded) {B};
+
+\node[textureUnit,
+    fill=AdobeGreen!\grad,
+    draw = AdobeGreen,
+    xshift=10pt,
+    below = \ecartYTexture of redAdecoded] (greenAdecoded) {A};
+\node[textureUnit,
+    fill=AdobeGreen!\grad,
+    draw = AdobeGreen,
+    below=\ecart of greenAdecoded] (greenBdecoded) {B};
+
+\node[textureUnit,
+    fill=AdobeBlue!\grad,
+    draw = AdobeBlue,
+    below = \ecartYTexture of greenBdecoded] (blueAdecoded) {A};
+
+\node[font=\normalsize] at (greenAdecoded |- texture) {reconstructed textures};
+
+
+% ================================
+\tikzstyle{vecArrow} = [thick, decoration={markings,mark=at position
+   1 with {\arrow[semithick]{open triangle 60}}},
+   double distance=1.4pt, shorten >= 5.5pt,
+   preaction = {decorate},
+   postaction = {draw,line width=1.4pt, white,shorten >= 4.5pt}]
+
+
+\draw[vecArrow] ([xshift=3pt,yshift=7pt]greenB.east) to 
+    node[above=3pt,circle,thick,draw] {1}
+    ([xshift=-13pt]greenAextracted);
+    
+\draw[vecArrow] ([xshift=3pt]greenAextracted.east) to 
+    node[above=3pt,circle,thick,draw] {2}
+    ([xshift=-13pt]greenAsequenced);
+
+\draw[vecArrow] ([xshift=3pt]greenAsequenced.east) to 
+    node[above=3pt,circle,thick,draw] {3}
+    ([xshift=-17pt]frameOne);
+    
+\draw[vecArrow] ([xshift=7pt]na.east) to 
+    node[above=3pt,circle,thick,draw] {4}
+    ([xshift=-13pt]grayExtracted);
+
+\draw[vecArrow] ([xshift=3pt]grayExtracted.east) to 
+    node[above=3pt,circle,thick,draw] {5}
+    ([xshift=-13pt,yshift=7pt]greenBdecoded);
+    
+
+\end{tikzpicture}

@@ -13,7 +13,6 @@
 \definecolor{NeutralSand}{RGB}{192,181,169}
 \definecolor{NeutralDarkSand}{RGB}{136,120,104}
 
-
 \tikzset{
 	style_box/.style={very thick}
 }
@@ -27,11 +26,24 @@
 {very thick, densely dashed, draw=AdobeGreen},
 {very thick, densely dotted, draw=AdobeViolet},
 {thick, draw=AdobeGreen},
-{thick, draw=AdobeViolet}
 }
 
 \usepackage{xstring}
+\pgfplotstableset{col sep=space}
+\pgfplotscreateplotcyclelist{cycle-adobe}{
+   {AdobeOrange},
+   {NeutralSand},
+   {thick,AdobeOrange, densely dotted},
+   {thick,NeutralSand, densely dotted},
+   {AdobeRed},
+   {thick,AdobeRed, densely dotted},
+}
 
+\pgfplotscreateplotcyclelist{adobe-rd}{
+   {thick,AdobeOrange, mark=o},
+   {thick,NeutralDarkGray, mark=triangle},
+   {thick,AdobeRed, mark=+},
+}
 
 \newcommand*{\DrawBoundingBox}[1][]{%
   \draw [red]
